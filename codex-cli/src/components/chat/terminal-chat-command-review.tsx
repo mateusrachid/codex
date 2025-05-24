@@ -297,7 +297,7 @@ function useAutoApprove({
   isActive: boolean;
   onReviewCommand: (decision: ReviewDecision) => void;
 }) {
-  const AUTO_APPROVE_TIMEOUT_MILLIS = 10 * 1000;
+  const AUTO_APPROVE_TIMEOUT_MILLIS = 5 * 1000;
 
   const [autoApproveRemainingSeconds, setAutoApproveRemainingSeconds] =
     useState(0);
