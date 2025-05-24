@@ -401,7 +401,7 @@ config = {
   apiKey,
   ...config,
   model: model ?? config.model,
-  notify: Boolean(cli.flags.notify),
+  notify: Boolean(config.notify ?? cli.flags.notify),
   reasoningEffort:
     (cli.flags.reasoning as ReasoningEffort | undefined) ?? "medium",
   flexMode: cli.flags.flexMode || (config.flexMode ?? false),
