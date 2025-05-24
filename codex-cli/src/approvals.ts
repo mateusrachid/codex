@@ -414,36 +414,34 @@ export function isSafeCommand(
         reason: "Locate command",
         group: "Searching",
       };
+    case "search":
+      return {
+        reason: cmd1 ? `Search ${cmd1}` : "Search",
+        group: "Searching",
+      };
     case "git":
-      switch (cmd1) {
-        case "status":
-          return {
-            reason: "Git status",
-            group: "Versioning",
-          };
-        case "branch":
-          return {
-            reason: "List Git branches",
-            group: "Versioning",
-          };
-        case "log":
-          return {
-            reason: "Git log",
-            group: "Using git",
-          };
-        case "diff":
-          return {
-            reason: "Git diff",
-            group: "Using git",
-          };
-        case "show":
-          return {
-            reason: "Git show",
-            group: "Using git",
-          };
-        default:
-          return null;
+      return {
+        reason: cmd1 ? `Git ${cmd1}` : "Git",
+        group: "Versioning",
+      };
+    case "pnpm":
+      if (cmd1 === "exec") {
+        break;
       }
+      return {
+        reason: cmd1 ? `Pnpm ${cmd1}` : "Pnpm",
+        group: "Package manager",
+      };
+
+    case "npm":
+      if (cmd1 === "view") {
+        return {
+          reason: "Npm view",
+          group: "Package manager",
+        };
+      }
+      break;
+
     case "cargo":
       if (cmd1 === "check") {
         return {
