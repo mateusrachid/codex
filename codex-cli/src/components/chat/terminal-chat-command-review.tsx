@@ -6,7 +6,8 @@ import { ReviewDecision } from "../../utils/agent/review";
 import { Select } from "../vendor/ink-select/select";
 import TextInput from "../vendor/ink-text-input";
 import { Box, Text, useInput } from "ink";
-import React from "react";
+import { spawn } from "node:child_process";
+import React, { useCallback, useEffect, useState } from "react";
 
 // default deny‑reason:
 const DEFAULT_DENY_MESSAGE =
@@ -119,8 +120,15 @@ export function TerminalChatCommandReview({
     return opts;
   }, [showAlwaysApprove]);
 
+  const { autoApproveRemainingSeconds, cancelAutoApprove, autoApproveEnabled } =
+    useAutoApprove({
+      isActive,
+      onReviewCommand,
+    });
+
   useInput(
     (input, key) => {
+      cancelAutoApprove();
       if (mode === "select") {
         if (input === "y") {
           onReviewCommand(ReviewDecision.YES);
@@ -163,6 +171,21 @@ export function TerminalChatCommandReview({
     },
     { isActive },
   );
+
+  useEffect(() => {
+    if (isActive && mode === "select" && autoApproveEnabled) {
+      const { commandForDisplay } =
+        (confirmationPrompt &&
+          typeof confirmationPrompt === "object" &&
+          "props" in confirmationPrompt &&
+          confirmationPrompt?.props) ??
+        {};
+      spawn("osascript", [
+        "-e",
+        `display notification "${commandForDisplay}" with title "Allow command?" sound name "Ping"`,
+      ]);
+    }
+  }, [autoApproveEnabled, confirmationPrompt, isActive, mode]);
 
   return (
     <Box flexDirection="column" gap={1} borderStyle="round" marginTop={1}>
@@ -223,6 +246,18 @@ export function TerminalChatCommandReview({
                 }}
                 options={approvalOptions}
               />
+              {autoApproveEnabled ? (
+                autoApproveRemainingSeconds > 0 ? (
+                  <Text bold color="red">
+                    Auto-approve in {autoApproveRemainingSeconds} seconds
+                    <Text dimColor> (press any key to cancel)</Text>
+                  </Text>
+                ) : (
+                  <Text bold color="red">
+                    Auto-approving...
+                  </Text>
+                )
+              ) : null}
             </Box>
           </>
         ) : mode === "input" ? (
@@ -253,4 +288,65 @@ export function TerminalChatCommandReview({
       </Box>
     </Box>
   );
+}
+
+function useAutoApprove({
+  isActive,
+  onReviewCommand,
+}: {
+  isActive: boolean;
+  onReviewCommand: (decision: ReviewDecision) => void;
+}) {
+  const AUTO_APPROVE_TIMEOUT_MILLIS = 10 * 1000;
+
+  const [autoApproveRemainingSeconds, setAutoApproveRemainingSeconds] =
+    useState(0);
+  const [autoApproveEnabled, setAutoApproveEnabled] = useState(true);
+  const autoApproveIntervalRef = React.useRef<NodeJS.Timeout>();
+
+  useEffect(() => {
+    if (!isActive || !autoApproveEnabled) {
+      return;
+    }
+    const startTime = Date.now();
+    const iterate = () => {
+      const elapsed = Date.now() - startTime;
+      const remaining = Math.max(0, AUTO_APPROVE_TIMEOUT_MILLIS - elapsed);
+      setAutoApproveRemainingSeconds(Math.floor(remaining / 1000));
+      if (remaining <= 0) {
+        clearInterval(autoApproveIntervalRef.current);
+        setAutoApproveRemainingSeconds(0);
+        onReviewCommand(ReviewDecision.YES);
+      }
+    };
+    iterate();
+    autoApproveIntervalRef.current = setInterval(iterate, 1000);
+    return () => {
+      clearInterval(autoApproveIntervalRef.current);
+      setAutoApproveRemainingSeconds(0);
+    };
+  }, [
+    AUTO_APPROVE_TIMEOUT_MILLIS,
+    autoApproveEnabled,
+    isActive,
+    onReviewCommand,
+  ]);
+
+  useEffect(() => {
+    if (!isActive) {
+      setAutoApproveEnabled(true);
+    }
+  }, [isActive]);
+
+  const cancelAutoApprove = useCallback(() => {
+    setAutoApproveEnabled(false);
+    clearInterval(autoApproveIntervalRef.current);
+    setAutoApproveRemainingSeconds(0);
+  }, []);
+
+  return {
+    autoApproveRemainingSeconds,
+    cancelAutoApprove,
+    autoApproveEnabled,
+  };
 }
