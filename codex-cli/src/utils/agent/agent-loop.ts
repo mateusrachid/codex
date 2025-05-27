@@ -1637,6 +1637,7 @@ You MUST adhere to the following criteria when executing the task:
         - Avoid unneeded complexity in your solution.
             - Ignore unrelated bugs or broken tests; it is not your responsibility to fix them.
         - Update documentation as necessary.
+        - Use project's package manager to install dependencies instead of guessing package versions.
         - Keep changes consistent with the style of the existing codebase. Changes should be minimal and focused on the task.
             - Use \`git log\` and \`git blame\` to search the history of the codebase if additional context is required.
         - NEVER add copyright or license headers unless specifically requested.
