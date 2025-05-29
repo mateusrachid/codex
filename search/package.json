@@ -2,14 +2,14 @@
   "name": "search",
   "version": "1.0.0",
   "description": "",
-  "main": "src/index.ts",
+  "main": "dist/index.js",
   "type": "module",
   "bin": {
     "search": "dist/index.js"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "esbuild src/index.ts --platform=node --target=node18 --outfile=dist/index.js --banner:js=\"#!/usr/bin/env node\""
+    "build": "esbuild src/*.ts --platform=node --target=node18 --outdir=dist --banner:js='#!/usr/bin/env node'"
   },
   "keywords": [],
   "author": "",
