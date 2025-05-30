@@ -35,6 +35,16 @@ try {
     searchHistory.getHistory(),
   );
   const formattedResponse = await formatResponse(searchResults);
+
+  searchHistory.addMessage({
+    role: "user",
+    content: prompt,
+  });
+  searchHistory.addMessage({
+    role: "assistant",
+    content: formattedResponse,
+  });
+
   console.log(formattedResponse);
   process.exit(0);
 } catch (error) {
